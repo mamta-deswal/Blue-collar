@@ -32,10 +32,13 @@ async function getCoordinates(address) {
   }
 }
 
-// Labor Registration API
 exports.registerLabor = async (req, res) => {
   try {
-    const { name, area, city, pincode, phone, service } = req.body;
+    const { name, fullAddress, phone, service } = req.body;
+
+    if (!name || !fullAddress || !phone || !service) {
+      return res.status(400).json({ message: "All fields are required." });
+    }
 
     const existingLabor = await Labor.findOne({ phone });
     if (existingLabor) {
@@ -44,8 +47,7 @@ exports.registerLabor = async (req, res) => {
         .json({ message: "Laborer with this phone number already exists." });
     }
 
-    const address = `${area}, ${city}, ${pincode}`;
-    const coordinates = await getCoordinates(address);
+    const coordinates = await getCoordinates(fullAddress);
 
     if (!coordinates) {
       return res
@@ -55,9 +57,7 @@ exports.registerLabor = async (req, res) => {
 
     const labor = new Labor({
       name,
-      area,
-      city,
-      pincode,
+      fullAddress,
       phone,
       service,
       latitude: coordinates.latitude,
@@ -75,15 +75,14 @@ exports.registerLabor = async (req, res) => {
   }
 };
 
-// Search Laborers API
 exports.searchLaborers = async (req, res) => {
   try {
-    const { service, area, pincode, city } = req.query;
+    const { service, fullAddress } = req.query;
 
-    if (!service || !area || !pincode || !city) {
+    if (!service || !fullAddress) {
       return res
         .status(400)
-        .json({ message: "Service, area, pincode, and city are required." });
+        .json({ message: "Service and fullAddress are required." });
     }
 
     const projection = {
@@ -91,28 +90,10 @@ exports.searchLaborers = async (req, res) => {
       longitude: 0,
     };
 
-    let laborers = await Labor.find(
-      { service, area, pincode, city },
-      projection
-    );
+    let laborers = await Labor.find({ service, fullAddress }, projection);
     if (laborers.length > 0) return res.status(200).json(laborers);
 
-    laborers = await Labor.find(
-      { service, city, pincode, area: { $ne: area } },
-      projection
-    );
-    if (laborers.length > 0) return res.status(200).json(laborers);
-
-    laborers = await Labor.find(
-      { service, city, pincode: { $ne: pincode }, area: { $ne: area } },
-      projection
-    );
-    if (laborers.length > 0) return res.status(200).json(laborers);
-
-    laborers = await Labor.find({ service, city }, projection);
-    if (laborers.length > 0) return res.status(200).json(laborers);
-
-    const coordinates = await getCoordinates(`${area}, ${city}, ${pincode}`);
+    const coordinates = await getCoordinates(fullAddress);
     if (coordinates) {
       laborers = await Labor.find(
         {
@@ -123,7 +104,7 @@ exports.searchLaborers = async (req, res) => {
                 type: "Point",
                 coordinates: [coordinates.longitude, coordinates.latitude],
               },
-              $maxDistance: 5000,
+              $maxDistance: 10000,
             },
           },
         },
