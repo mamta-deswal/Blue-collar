@@ -79,42 +79,52 @@ exports.searchLaborers = async (req, res) => {
   try {
     const { service, fullAddress } = req.query;
 
-    if (!service || !fullAddress) {
-      return res
-        .status(400)
-        .json({ message: "Service and fullAddress are required." });
+    if (!service) {
+      return res.status(400).json({ message: "Service is required." });
     }
 
-    const projection = {
-      latitude: 0,
-      longitude: 0,
-    };
+    const projection = { latitude: 0, longitude: 0 };
+    let query = { service };
 
-    let laborers = await Labor.find({ service, fullAddress }, projection);
-    if (laborers.length > 0) return res.status(200).json(laborers);
+    if (!fullAddress || fullAddress.trim() === "") {
+      const laborers = await Labor.find(query, projection);
+      return laborers.length
+        ? res.status(200).json(laborers)
+        : res.status(404).json({ message: "No laborers found." });
+    }
 
-    const coordinates = await getCoordinates(fullAddress);
-    if (coordinates) {
-      laborers = await Labor.find(
-        {
-          service,
-          location: {
-            $near: {
-              $geometry: {
-                type: "Point",
-                coordinates: [coordinates.longitude, coordinates.latitude],
+    if (fullAddress && fullAddress.length > 0) {
+      const coordinates = await getCoordinates(fullAddress);
+      if (coordinates) {
+        const laborers = await Labor.find(
+          {
+            service,
+            location: {
+              $near: {
+                $geometry: {
+                  type: "Point",
+                  coordinates: [coordinates.longitude, coordinates.latitude],
+                },
+                $maxDistance: 10000,
               },
-              $maxDistance: 10000,
             },
           },
-        },
-        projection
-      );
-      if (laborers.length > 0) return res.status(200).json(laborers);
+          projection
+        );
+        return laborers.length
+          ? res.status(200).json(laborers)
+          : res.status(404).json({ message: "No laborers found." });
+      } else {
+        return res.status(400).json({ message: "Invalid address provided." });
+      }
+    } else {
+      query.fullAddress = { $regex: new RegExp(fullAddress, "i") };
+      const laborers = await Labor.find(query, projection);
+      return laborers.length
+        ? res.status(200).json(laborers)
+        : res.status(404).json({ message: "No laborers found." });
     }
-
-    return res.status(404).json({ message: "No laborers found." });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    return res.status(500).json({ error: error.message });
   }
 };
