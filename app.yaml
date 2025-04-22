@@ -1,0 +1,9 @@
+runtime: nodejs20
+instance_class: F1
+env: standard
+env_variables:
+  MONGO_URI: "your-mongo-uri"
+  PORT: "8080" 
+handlers:
+  - url: /.*  
+    script: auto
