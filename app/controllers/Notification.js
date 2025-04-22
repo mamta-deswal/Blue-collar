@@ -3,10 +3,24 @@ const Labor = require("../models/Laborer");
 const admin = require('firebase-admin');
 
 
-const serviceAccount = require("C:/Users/Kaushal/Downloads/notify-4b111-firebase-adminsdk-fbsvc-7de843196f.json");
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount),
-});
+// const serviceAccount = require("C:/Users/Kaushal/Downloads/notify-4b111-firebase-adminsdk-fbsvc-7de843196f.json");
+// admin.initializeApp({
+//   credential: admin.credential.cert(serviceAccount),
+// });
+
+try {
+  const serviceAccount = JSON.parse(process.env.FIREBASE_CONFIG);
+  console.log("✅ Firebase config loaded correctly");
+} catch (err) {
+  console.error("❌ Failed to load Firebase config:", err.message);
+}
+
+
+if (!admin.apps.length) {
+  admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount),
+  });
+}
 
 async function sendNotification(phone, message) {
   try {

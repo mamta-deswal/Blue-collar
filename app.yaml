@@ -7,3 +7,5 @@ env_variables:
 handlers:
   - url: /.*  
     script: auto
+env_variables:
+  GOOGLE_APPLICATION_CREDENTIALS: "./notify-firebase-key.json"
