@@ -8,15 +8,16 @@ const admin = require('firebase-admin');
 //   credential: admin.credential.cert(serviceAccount),
 // });
 
+let serviceAccount;
+
 try {
-  const serviceAccount = JSON.parse(process.env.FIREBASE_CONFIG);
+  serviceAccount = JSON.parse(process.env.FIREBASE_CONFIG);
   console.log("✅ Firebase config loaded correctly");
 } catch (err) {
   console.error("❌ Failed to load Firebase config:", err.message);
 }
 
-
-if (!admin.apps.length) {
+if (!admin.apps.length && serviceAccount) {
   admin.initializeApp({
     credential: admin.credential.cert(serviceAccount),
   });
