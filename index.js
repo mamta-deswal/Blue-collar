@@ -17,6 +17,10 @@ app.use("/api/auth", authRoutes);
 app.use("/api/labor", laborRoutes);
 app.use("/api/notifications", notificationRoutes);
 
+app.get('/', (req, res) => {
+  res.send('✅ API is running successfully on App Engine!');
+})
+
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 
