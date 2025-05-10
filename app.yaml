@@ -1,0 +1,13 @@
+runtime: nodejs20
+instance_class: F1
+env: standard
+
+env_variables:
+  MONGO_URI: "your-mongo-uri"
+  PORT: "8080"
+  GOOGLE_APPLICATION_CREDENTIALS: "./notify-firebase-key.json"
+
+handlers:
+  - url: /.*
+    script: auto
+

@@ -34,7 +34,7 @@ async function getCoordinates(address) {
 
 exports.registerLabor = async (req, res) => {
   try {
-    const { name, fullAddress, phone, service } = req.body;
+    const { name, fullAddress, phone, service /*fcmToken*/ } = req.body;
 
     if (!name || !fullAddress || !phone || !service) {
       return res.status(400).json({ message: "All fields are required." });
@@ -66,6 +66,7 @@ exports.registerLabor = async (req, res) => {
         type: "Point",
         coordinates: [coordinates.longitude, coordinates.latitude],
       },
+      //fcmToken,
     });
 
     await labor.save();
@@ -74,6 +75,50 @@ exports.registerLabor = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+// exports.searchLaborers = async (req, res) => {
+//   try {
+//     const { service, fullAddress } = req.query;
+
+//     if (!service || !fullAddress) {
+//       return res
+//         .status(400)
+//         .json({ message: "Service and fullAddress are required." });
+//     }
+
+//     const projection = {
+//       latitude: 0,
+//       longitude: 0,
+//     };
+
+//     let laborers = await Labor.find({ service, fullAddress }, projection);
+//     if (laborers.length > 0) return res.status(200).json(laborers);
+
+//     const coordinates = await getCoordinates(fullAddress);
+//     if (coordinates) {
+//       laborers = await Labor.find(
+//         {
+//           service,
+//           location: {
+//             $near: {
+//               $geometry: {
+//                 type: "Point",
+//                 coordinates: [coordinates.longitude, coordinates.latitude],
+//               },
+//               $maxDistance: 10000,
+//             },
+//           },
+//         },
+//         projection
+//       );
+//       if (laborers.length > 0) return res.status(200).json(laborers);
+//     }
+
+//     return res.status(404).json({ message: "No laborers found." });
+//   } catch (error) {
+//     res.status(500).json({ error: error.message });
+//   }
+// };
 
 exports.searchLaborers = async (req, res) => {
   try {
